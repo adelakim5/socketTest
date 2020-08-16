@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="./style.css">
+    <title>Socket.IO chat</title>
+</head>
+
+<body>
+    <ul id="messages"></ul>
+    <div id="typing" class="hidden">user is typing...</div>
+    <form action="">
+        <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script>
+        const socket = io();
+        const input = document.querySelector("#m")
+        const form = document.querySelector('form')
+        const messages = document.querySelector('#messages')
+        let typing = document.querySelector('#typing')
+        let isFilled = null
+
+        function throttle(func, time){
+            if(!isFilled) {
+                isFilled = setTimeout(()=>{
+                    func()
+                    isFilled = null
+                }, time)
+            }
+        }
+
+        input.addEventListener('input', (e)=>{
+            if(!e.target.value) {
+                console.log("?????")
+                typing.classList.replace('visible', 'hidden')
+                return
+            }
+            throttle(() => {
+                typing.classList.replace('hidden', 'visible')
+            }, 500)
+        })
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault()
+            if (!input.value) {
+                alert('내용을 입력해주세요')
+                return
+            }
+            socket.emit('chat message', input.value);
+            typing.classList.replace('visible', 'hidden')
+            input.value = '';
+            input.focus()
+            clearTimeout(isFilled)
+            // setTimeout이 작동하지 않게 하는 애 
+            // isFilled에 걸린 setTimeout을 없앰 
+            isFilled = null
+            // 없앤 isFilled를 null로 
+            console.log(isFilled)
+            return false
+        })
+        socket.on('chat message', function (msg) {
+            const li = document.createElement('li')
+            li.innerText = msg
+            messages.appendChild(li)
+        })
+    </script>
+</body>
+
+</html>
